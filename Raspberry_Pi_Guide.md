@@ -1,7 +1,5 @@
 # Part 2 - How to Run TensorFlow Lite Object Detection Models on the Raspberry Pi (with Optional Coral USB Accelerator)
 
-**Part 2 of this guide, which shows how to use the Coral USB Accelerator, is still under construction!** In the meantime, you can use the guide [here](https://github.com/tensorflow/examples/tree/master/lite/examples/object_detection/raspberry_pi).
-
 <p align="center">
    <img src="doc/TFLite-vs-EdgeTPU.gif">
 </p>
@@ -212,17 +210,17 @@ If you want to use the libedgetpu-max library, install it by using `sudo apt-get
 Alright! Now that the libedgetpu runtime is installed, it's time to set up an Edge TPU detection model to use it with.
 
 ### Step 2b. Set up Edge TPU detection model
-Edge TPU models are TensorFlow Lite models that have been compiled specifically to run on Edge TPU devices like the Coral USB Accelerator. They reside in a .tflite file and are used the same way as a regular TF Lite model. My preferred method is to keep the Edge TPU file in the same model folder as the TFLite model it was compiled from, and name it as "detect_edgetpu.tflite".
+Edge TPU models are TensorFlow Lite models that have been compiled specifically to run on Edge TPU devices like the Coral USB Accelerator. They reside in a .tflite file and are used the same way as a regular TF Lite model. My preferred method is to keep the Edge TPU file in the same model folder as the TFLite model it was compiled from, and name it as "edgetpu.tflite".
 
 I'll show two options for setting up an Edge TPU model: using the sample model from Google, or using a custom model you compiled yourself.
 
 #### Option 1. Using Google's sample EdgeTPU model
-Google provides a sample Edge TPU model that is compiled from the quantized SSDLite-MobileNet-v2 we used in [Step 1e](https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/Raspberry_Pi_Guide.md#step-1e-set-up-tensorflow-lite-detection-model). Download it and move it into the Sample_TFLite_model folder (while simultaneously renaming it to "detect_edgetpu.tflite") by issuing these commands:
+Google provides a sample Edge TPU model that is compiled from the quantized SSDLite-MobileNet-v2 we used in [Step 1e](https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/Raspberry_Pi_Guide.md#step-1e-set-up-tensorflow-lite-detection-model). Download it and move it into the Sample_TFLite_model folder (while simultaneously renaming it to "edgetpu.tflite") by issuing these commands:
 
 ```
 wget https://dl.google.com/coral/canned_models/mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite
 
-mv mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite Sample_TFLite_model/detect_edgetpu.tflite
+mv mobilenet_ssd_v2_coco_quant_postprocess_edgetpu.tflite Sample_TFLite_model/edgetpu.tflite
 ```
 
 Now the sample Edge TPU model is all ready to go. It will use the same labelmap.txt file as the TFLite model, which should already be located in the Sample_TFLite_model folder.
@@ -230,16 +228,36 @@ Now the sample Edge TPU model is all ready to go. It will use the same labelmap.
 #### Option 2. Using your own custom EdgeTPU model
 If you trained a custom TFLite detection model, you can compile it for use with the Edge TPU. Unfortunately, the edgetpu-compiler package doesn't work on the Raspberry Pi: you need a Linux PC to use it on. Section 3 of this guide will give a couple options for compiling your own model if you don't have a Linux box. While I'm working on writing it, [here are the official instructions that show how to compile an Edge TPU model from a TFLite model](https://coral.withgoogle.com/docs/edgetpu/compiler/).
 
-Assuming you've been able to compile your TFLite model into an EdgeTPU model, you can simply copy the .tflite file onto a USB and transfer it to the model folder on your Raspberry Pi. For my "BirdSquirrelRaccoon_TFLite_model" example from [Step 1e](https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/Raspberry_Pi_Guide.md#step-1e-set-up-tensorflow-lite-detection-model), I can compile my "BirdSquirrelRaccoon_TFLite_model" on a Linux PC, put the resulting detect_edgetpu.tflite file on a USB, transfer the USB to my Pi, and move the detect_edgetpu.tflite file into the /home/pi/tflite1/BirdSquirrelRaccoon_TFLite_model folder. It will use the same labelmap.txt file that already exists in the folder to get its labels.
+Assuming you've been able to compile your TFLite model into an EdgeTPU model, you can simply copy the .tflite file onto a USB and transfer it to the model folder on your Raspberry Pi. For my "BirdSquirrelRaccoon_TFLite_model" example from [Step 1e](https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/Raspberry_Pi_Guide.md#step-1e-set-up-tensorflow-lite-detection-model), I can compile my "BirdSquirrelRaccoon_TFLite_model" on a Linux PC, put the resulting edgetpu.tflite file on a USB, transfer the USB to my Pi, and move the edgetpu.tflite file into the /home/pi/tflite1/BirdSquirrelRaccoon_TFLite_model folder. It will use the same labelmap.txt file that already exists in the folder to get its labels.
 
-Once the detect_edgetpu.tflite file has been moved into the model folder, it's ready to go!
+Once the edgetpu.tflite file has been moved into the model folder, it's ready to go!
 
 ### Step 2c. Run detection with Edge TPU!
 
-**This guide is still under construction! It should be done in a couple weeks. For now, you can see full instructions on using the USB Accelerator [here](https://github.com/tensorflow/examples/tree/master/lite/examples/object_detection/raspberry_pi).**
+Now that everything is set up, it's time to test out the Coral's ultra-fast detection speed! Make sure to free up memory and processing power by closing any programs you aren't using. Make sure you have a webcam plugged in.
 
-**The code in this repository currently DOES NOT WORK with USB Coral Accelerator. But it will once I get time to finish it!**
+Plug in your Coral USB Accelerator into one of the USB ports on the Raspberry Pi. If you're using a Pi 4, make sure to plug it in to one of the blue USB 3.0 ports.
 
+*Insert picture of Coral USB Accelerator plugged into Raspberry Pi here!*
+
+Make sure the tflite1-env environment is activate by checking that (tflite1-env) appears in front of the command prompt in your terminal. Then, run the real-time webcam detection script with the --edgetpu argument:
+
+```
+python3 TFLite_detection_webcam.py --modeldir=Sample_TFLite_model --edgetpu
+```
+
+The `--edgetpu` argument tells the script to use the Coral USB Accelerator and the EdgeTPU-compiled .tflite file. If your model folder has a different name than "Sample_TFLite_model", use that name instead.
+
+After a brief initialization period, a window will appear showing the webcam feed with detections drawn on each from. The detection will run SIGNIFICANTLY faster with the Coral USB Accelerator.
+
+If you'd like to run the video or image detection scripts with the Accelerator, use these commands:
+
+```
+python3 TFLite_detection_video.py --modeldir=Sample_TFLite_model --edgetpu
+python3 TFLite_detection_image.py --modeldir=Sample_TFLite_model --edgetpu
+```
+
+Have fun with the blazing detection speeds of the Coral USB Accelerator!
 
 ## Section 3 - Compile Custom Edge TPU Object Detection Models
 
@@ -251,3 +269,18 @@ This appendix lists common errors that have been encountered by users following 
 
 ### 1. TypeError: int() argument must be a string, a bytes-like object or a number, not 'NoneType'
 The 'NoneType' error means that the program received an empty array from the webcam, which typically means something is wrong with the webcam or the interface to the webcam. Try plugging and re-plugging the webcam in a few times, and/or power cycling the Raspberry Pi, and see if that works. If not, you may need to try using a new webcam.
+
+### 2. ImportError: No module named 'cv2'
+This error occurs when you try to run any of the TFLite_detection scripts without activating the 'tflite1-env' first. It happens because Python cannot find the path to the OpenCV library (cv2) to import it. 
+
+Resolve the issue by closing your terminal window, re-opening it, and issuing:
+
+```
+cd tflite1
+source tflite1-env/bin/activate
+```
+
+Then, try re-running the script as described in [Step 1e](https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/Raspberry_Pi_Guide.md#step-1e-run-the-tensorflow-lite-model).
+
+### 3. THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE
+This error can occur when you run the `bash get_pi_requirements.sh` command in Step 1c. It occurs because the package data got corrupted while downloading. You can resolve the error by re-running the `bash get_pi_requirements.sh` command a few more times until it successfully completes without reporting that error.
